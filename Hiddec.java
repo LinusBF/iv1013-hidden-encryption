@@ -14,14 +14,15 @@ import java.util.Map;
 
 public class Hiddec {
 
-    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException {
+    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException, InvalidAlgorithmParameterException {
         Map<String, String> params = parseArgs(args);
         if(params == null) {
             throw new IllegalArgumentException("Invalid arguments!");
         }
         String hexKey = params.get("key");
+        String ctrIV = params.get("ctr");
         byte[] inputBytes = loadFile(params.get("input"));
-        byte[] decipheredBytes = decryptByteArr(inputBytes, hexKey);
+        byte[] decipheredBytes = ctrIV != null ? decryptByteArr(inputBytes, hexKey, ctrIV) : decryptByteArr(inputBytes, hexKey);
         ArrayList<Integer> blockBoundaries = findHashedKeyBoundaries(decipheredBytes, hexKey);
         byte[] payload = extractPayload(decipheredBytes, blockBoundaries.get(0), blockBoundaries.get(1), hexKey);
         boolean verifiedPayload = verifyPayload(decipheredBytes, payload, blockBoundaries.get(1), hexKey);

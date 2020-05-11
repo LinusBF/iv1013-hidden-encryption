@@ -11,18 +11,19 @@ import java.util.Map;
 import java.util.Random;
 
 public class Hidenc {
-    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException {
+    public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException, InvalidAlgorithmParameterException {
         Map<String, String> params = parseArgs(args);
         if(params == null) {
             throw new IllegalArgumentException("Invalid arguments!");
         }
         String hexKey = params.get("key");
         Integer offset = Integer.parseInt(params.get("offset"));
+        String ctrIV = params.get("ctr");
         byte[] payload = loadFile(params.get("input"));
         byte[] block = createBlock(payload, hexKey);
-        byte[] container = getContainer(2048);
+        byte[] container = getContainer(Integer.parseInt(params.get("size")));
         insertBlockIntoContainer(container, block, offset);
-        byte[] encryptedBytes = encryptByteArr(container, hexKey);
+        byte[] encryptedBytes = ctrIV != null ? encryptByteArr(container, hexKey, ctrIV) : encryptByteArr(container, hexKey);
         writeToFile(encryptedBytes, params.get("output"));
         System.out.println(encryptedBytes.length + " bytes written");
     }
