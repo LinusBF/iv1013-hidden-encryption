@@ -15,8 +15,8 @@ public class Hiddec {
 
     public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException, InvalidAlgorithmParameterException {
         Map<String, String> params = parseArgs(args);
-        if(params == null) {
-            throw new IllegalArgumentException("Invalid arguments!");
+        if(params == null || !validateParams(params)) {
+            throw new IllegalArgumentException("Invalid arguments! Expected: key, input, output [Optional: ctr]");
         }
         String hexKey = params.get("key");
         String ctrIV = params.get("ctr");
@@ -33,6 +33,10 @@ public class Hiddec {
         if(outputFile != null){
             writeToFile(payload, outputFile);
         }
+    }
+
+    static boolean validateParams(Map<String, String> params) {
+        return params.get("key") != null && params.get("output") != null && params.get("input") != null;
     }
 
     static byte[] loadFile(String fileName) throws IOException {

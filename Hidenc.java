@@ -14,19 +14,24 @@ import java.util.Random;
 public class Hidenc {
     public static void main(String[] args) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException, InvalidAlgorithmParameterException {
         Map<String, String> params = parseArgs(args);
-        if(params == null) {
-            throw new IllegalArgumentException("Invalid arguments!");
+        if(params == null || !validateParams(params)) {
+            throw new IllegalArgumentException("Invalid arguments! Expected: key, input, output, (template || size) [Optional: ctr, offset]");
         }
         String hexKey = params.get("key");
-        Integer offset = Integer.parseInt(params.get("offset"));
         String ctrIV = params.get("ctr");
         String templateFile = params.get("template");
+        int size = params.get("size") != null ? Integer.parseInt(params.get("size")) : 2048;
         byte[] payload = loadFile(params.get("input"));
         byte[] block = createBlock(payload, hexKey);
         byte[] encryptedBytes = ctrIV != null ? encryptByteArr(block, hexKey, ctrIV) : encryptByteArr(block, hexKey);
-        byte[] container = templateFile != null ? loadFile(templateFile) : getContainer(Integer.parseInt(params.get("size")));
+        byte[] container = templateFile != null ? loadFile(templateFile) : getContainer(size);
+        int offset = params.get("offset") != null ? Integer.parseInt(params.get("offset")) : new Random().nextInt(size - encryptedBytes.length);
         insertBlockIntoContainer(container, encryptedBytes, offset);
         writeToFile(container, params.get("output"));
+    }
+
+    static boolean validateParams(Map<String, String> params) {
+        return params.get("key") != null && params.get("size") != null && params.get("output") != null && params.get("input") != null && (params.get("template") != null || params.get("size") != null);
     }
 
     static byte[] loadFile(String fileName) throws IOException {
