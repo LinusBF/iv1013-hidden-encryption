@@ -20,18 +20,30 @@ public class Hidenc {
         String hexKey = params.get("key");
         String ctrIV = params.get("ctr");
         String templateFile = params.get("template");
+        String offsetParam= params.get("offset");
         int size = params.get("size") != null ? Integer.parseInt(params.get("size")) : 2048;
         byte[] payload = loadFile(params.get("input"));
         byte[] block = createBlock(payload, hexKey);
         byte[] encryptedBytes = ctrIV != null ? encryptByteArr(block, hexKey, ctrIV) : encryptByteArr(block, hexKey);
         byte[] container = templateFile != null ? loadFile(templateFile) : getContainer(size);
-        int offset = params.get("offset") != null ? Integer.parseInt(params.get("offset")) : new Random().nextInt(size - encryptedBytes.length);
+        int maxOffset = container.length - encryptedBytes.length;
+        int offset = offsetParam != null && Integer.parseInt(offsetParam) < maxOffset ? Integer.parseInt(offsetParam) : new Random().nextInt(maxOffset);
+        offset = alignOffset(offset);
         insertBlockIntoContainer(container, encryptedBytes, offset);
         writeToFile(container, params.get("output"));
     }
 
     static boolean validateParams(Map<String, String> params) {
-        return params.get("key") != null && params.get("size") != null && params.get("output") != null && params.get("input") != null && (params.get("template") != null || params.get("size") != null);
+        return params.get("key") != null && params.get("output") != null && params.get("input") != null && (params.get("template") != null || params.get("size") != null);
+    }
+
+    static int alignOffset(int offset) {
+        int misAlignment = offset % 16;
+        if(misAlignment == 0) {
+            return misAlignment;
+        } else {
+            return offset - misAlignment;
+        }
     }
 
     static byte[] loadFile(String fileName) throws IOException {
